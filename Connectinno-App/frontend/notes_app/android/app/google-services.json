@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "313121256801",
+    "project_id": "connectinno-case-b7abf",
+    "storage_bucket": "connectinno-case-b7abf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:313121256801:android:8e3b5f7618b5e85b504120",
+        "android_client_info": {
+          "package_name": "com.example.notes_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6kamnVNnWYXHI4OXDM8zRvzGaVe_aq0Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

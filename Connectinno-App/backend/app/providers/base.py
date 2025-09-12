@@ -1,0 +1,16 @@
+from abc import ABC, abstractmethod
+from typing import List, Dict, Any
+
+class NotesRepository(ABC):
+    @abstractmethod
+    def list_notes(self, uid: str) -> List[Dict[str, Any]]: ...
+    @abstractmethod
+    def create_note(self, uid: str, title: str, content: str) -> Dict[str, Any]: ...
+    @abstractmethod
+    def update_note(self, uid: str, note_id: str, patch: Dict[str, Any]) -> Dict[str, Any]: ...
+    @abstractmethod
+    def delete_note(self, uid: str, note_id: str) -> None: ...
+
+class TokenVerifier(ABC):
+    @abstractmethod
+    def verify(self, authorization_header: str) -> dict: ...

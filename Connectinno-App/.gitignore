@@ -1,0 +1,81 @@
+# --------
+# OS / Editors
+# --------
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.log
+.vscode/
+.idea/
+
+# =========================
+# PYTHON BACKEND (backend/)
+# =========================
+backend/__pycache__/
+backend/**/*.pyc
+backend/.pytest_cache/
+backend/.coverage*
+backend/htmlcov/
+backend/.mypy_cache/
+backend/.ruff_cache/
+
+# Virtual envs
+backend/venv/
+backend/.venv/
+venv/
+.venv/
+
+# Env & secrets
+backend/.env
+backend/.env.*
+backend/keys/
+backend/**/service-account*.json
+# If you ever accidentally committed one:
+# (remove with: git rm --cached backend/keys/<file>.json)
+
+# Google / Firebase misc
+backend/firebase-debug.log
+
+# =========================
+# FLUTTER APP (notes_app/)
+# =========================
+notes_app/.dart_tool/
+notes_app/.packages
+notes_app/.flutter-plugins
+notes_app/.flutter-plugins-dependencies
+notes_app/.fvm/
+notes_app/build/
+notes_app/coverage/
+notes_app/pubspec.lock      # (optional for apps; keep for packages)
+
+# Android
+notes_app/android/.gradle/
+notes_app/android/local.properties
+notes_app/android/*.iml
+notes_app/android/captures/
+notes_app/android/app/*.iml
+
+# iOS
+notes_app/ios/Flutter/Flutter.framework
+notes_app/ios/Flutter/Flutter.podspec
+notes_app/ios/Flutter/App.framework
+notes_app/ios/Flutter/Generated.xcconfig
+notes_app/ios/Flutter/ephemeral/
+notes_app/ios/.generated/
+notes_app/ios/Runner/GeneratedPluginRegistrant.*
+notes_app/ios/Pods/
+# (Recommended: keep Podfile.lock under version control)
+# !notes_app/ios/Podfile.lock
+
+# Xcode user-specific
+notes_app/ios/Runner.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+notes_app/ios/Runner.xcworkspace/xcuserdata/
+notes_app/ios/Runner.xcodeproj/project.xcworkspace/
+notes_app/ios/Runner.xcodeproj/xcuserdata/
+
+# Firebase platform configs:
+# NOTE: These are OK to COMMIT for client apps (not secrets).
+# If your policy says otherwise, uncomment the ignores below.
+# notes_app/android/app/google-services.json
+# notes_app/ios/Runner/GoogleService-Info.plist
