@@ -35,7 +35,7 @@ class _NotesPageState extends State<NotesPage> {
     try {
       notes = await svc.list();
     } catch (e) {
-      error = e.toString();
+      error = "There is a connection error: Please try again!";
     } finally {
       if (mounted)
         setState(() {
@@ -149,7 +149,28 @@ class _NotesPageState extends State<NotesPage> {
               ? const Center(child: CircularProgressIndicator())
               : error != null
               ? Center(
-                child: Text(error!, style: const TextStyle(color: Colors.red)),
+                child: Container(
+                  padding: EdgeInsets.all(10),
+                  height: MediaQuery.of(context).size.height * 0.12,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.red),
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.white,
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        error ?? "A problem occured.",
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                      Spacer(),
+                      IconButton(
+                        onPressed: _load,
+                        icon: const Icon(Icons.refresh),
+                      ),
+                    ],
+                  ),
+                ),
               )
               : ListView.builder(
                 itemCount: notes.length,
