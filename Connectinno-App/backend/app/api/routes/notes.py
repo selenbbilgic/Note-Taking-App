@@ -15,7 +15,8 @@ def list_notes(user=Depends(get_current_user), repo=Depends(get_repo)):
 @router.post("", response_model=NoteOut, status_code=201)
 def create_note(payload: NoteCreate, user=Depends(get_current_user), repo=Depends(get_repo)):
     svc = NotesService(repo)
-    return NoteOut(**svc.create(user["uid"], payload.title, payload.content))
+    created = svc.create(user["uid"], payload.title, payload.content, pinned=payload.pinned)
+    return NoteOut(**created)
 
 @router.put("/{note_id}", response_model=NoteOut)
 def update_note(note_id: str, payload: NoteUpdate, user=Depends(get_current_user), repo=Depends(get_repo)):

@@ -15,9 +15,7 @@ class ApiClient {
     Future<Response<T>> Function(String token) f,
   ) async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      throw StateError('Not authenticated');
-    }
+    if (user == null) throw StateError('Not authenticated');
     final token = await user.getIdToken();
     return f(token ?? "");
   }
@@ -29,26 +27,35 @@ class ApiClient {
     ),
   );
 
-  Future<Response<dynamic>> createNote(String title, String content) =>
-      _authRequest(
-        (t) => _dio.post(
-          '/notes',
-          data: {'title': title, 'content': content},
-          options: Options(headers: {'Authorization': 'Bearer $t'}),
-        ),
-      );
+  Future<Response<dynamic>> createNote(
+    String title,
+    String content, {
+    bool pinned = false,
+  }) => _authRequest(
+    (t) => _dio.post(
+      '/notes',
+      data: {'title': title, 'content': content, 'pinned': pinned},
+      options: Options(headers: {'Authorization': 'Bearer $t'}),
+    ),
+  );
 
   Future<Response<dynamic>> updateNote(
     String id, {
     String? title,
     String? content,
-  }) => _authRequest(
-    (t) => _dio.put(
+    bool? pinned,
+  }) => _authRequest((t) {
+    final body = <String, dynamic>{
+      'title': title,
+      'content': content,
+      'pinned': pinned,
+    }..removeWhere((k, v) => v == null);
+    return _dio.put(
       '/notes/$id',
-      data: {'title': title, 'content': content},
+      data: body,
       options: Options(headers: {'Authorization': 'Bearer $t'}),
-    ),
-  );
+    );
+  });
 
   Future<Response<dynamic>> deleteNote(String id) => _authRequest(
     (t) => _dio.delete(

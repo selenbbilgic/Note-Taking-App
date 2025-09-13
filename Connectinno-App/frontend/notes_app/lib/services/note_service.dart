@@ -24,4 +24,9 @@ class NotesService {
   Future<void> delete(String id) async {
     await api.deleteNote(id);
   }
+
+  Future<Note> togglePin(Note note) async {
+    final res = await api.updateNote(note.id, pinned: !note.pinned);
+    return Note.fromJson(Map<String, dynamic>.from(res.data));
+  }
 }

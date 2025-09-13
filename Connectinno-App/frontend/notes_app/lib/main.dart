@@ -1,7 +1,13 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:notes_app/views/auth/auth_gate.dart';
+import 'package:notes_app/core/di.dart';
+import 'package:notes_app/features/auth/cubit/auth_cubit.dart';
+import 'package:notes_app/features/auth/cubit/auth_state.dart';
+import 'package:notes_app/features/auth/view/login_page.dart';
+import 'package:notes_app/features/notes/cubit/notes_cubit.dart';
+import 'package:notes_app/features/notes/view/notes_page.dart';
 import 'package:notes_app/firebase_options.dart';
 
 void main() async {
@@ -12,12 +18,30 @@ void main() async {
 
 class NotesApp extends StatelessWidget {
   const NotesApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Notes',
-      theme: appTheme(),
-      home: const AuthGate(),
+    return BlocProvider(
+      create: (_) => AuthCubit(FirebaseAuth.instance),
+      child: MaterialApp(
+        title: 'Notes',
+        theme: appTheme(),
+        home: BlocBuilder<AuthCubit, AuthState>(
+          builder: (context, state) {
+            if (state is Authenticated) {
+              // Create NotesCubit fresh for this user session
+              return BlocProvider(
+                create: (_) => NotesCubit(getNotesRepository())..load(),
+                child: NotesPage(
+                  key: ValueKey(state.user.uid),
+                ), // force rebuild per user
+              );
+            }
+            // Unauthenticated / Unknown / AuthError -> show Login
+            return const LoginPage();
+          },
+        ),
+      ),
     );
   }
 }
