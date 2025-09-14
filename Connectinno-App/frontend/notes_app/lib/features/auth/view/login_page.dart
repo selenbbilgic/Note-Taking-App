@@ -31,6 +31,11 @@ class _LoginPageState extends State<LoginPage> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
+                Text(
+                  'Current state: $state',
+                  style: const TextStyle(fontSize: 12),
+                ),
+                const SizedBox(height: 16),
                 TextField(
                   controller: emailCtl,
                   decoration: const InputDecoration(labelText: 'Email'),

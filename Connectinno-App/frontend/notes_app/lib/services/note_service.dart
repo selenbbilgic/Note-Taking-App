@@ -1,5 +1,5 @@
-import 'package:notes_app/services/api_client.dart';
-import 'package:notes_app/models/note.dart';
+import 'package:notes_app/data/api_client.dart';
+import 'package:notes_app/data/models/note.dart';
 
 class NotesService {
   final ApiClient api;

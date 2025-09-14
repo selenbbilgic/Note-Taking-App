@@ -1,8 +1,17 @@
 // lib/features/notes/cubit/notes_cubit.dart
 import 'package:bloc/bloc.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:notes_app/data/models/note.dart';
 import 'package:notes_app/data/repositories/notes_repository.dart';
 import 'notes_state.dart';
+
+class OfflinePinException implements Exception {
+  final String message;
+  OfflinePinException(this.message);
+
+  @override
+  String toString() => message;
+}
 
 class NotesCubit extends Cubit<NotesState> {
   final NotesRepository repo;
@@ -16,6 +25,23 @@ class NotesCubit extends Cubit<NotesState> {
   String _query = '';
   FilterScope _scope = FilterScope.both;
   bool _pinnedOnly = false;
+
+  // ---- Connectivity helpers ----
+  Future<bool> _isOnline() async {
+    try {
+      final result = await Connectivity().checkConnectivity();
+      return result.any(
+        (connectivity) =>
+            connectivity == ConnectivityResult.mobile ||
+            connectivity == ConnectivityResult.wifi ||
+            connectivity == ConnectivityResult.ethernet,
+      );
+    } catch (e) {
+      print('[NotesCubit] Connectivity check failed: $e');
+      // If connectivity check fails, assume we're online and let the API call determine
+      return true;
+    }
+  }
 
   // ---- Filtering helpers ----
   List<Note> _applyFilter() {
@@ -101,23 +127,43 @@ class NotesCubit extends Cubit<NotesState> {
   Future<void> load() async {
     emit(const NotesLoading());
     try {
+      print('[NotesCubit] Starting to fetch notes...');
       final fetched = await repo.fetchNotes(); // already pinned-first/newest
+      print('[NotesCubit] Fetched ${fetched.length} notes from repository');
       // de-dup (belt & suspenders)
       final seen = <String>{};
       _all = [];
       for (final n in fetched) {
         if (seen.add(n.id)) _all.add(n);
       }
+      print('[NotesCubit] After deduplication: ${_all.length} notes');
+      final filtered = _applyFilter();
+      print('[NotesCubit] After filtering: ${filtered.length} notes');
       emit(
         NotesLoaded(
-          _applyFilter(),
+          filtered,
           query: _query,
           scope: _scope,
           pinnedOnly: _pinnedOnly,
         ),
       );
-    } catch (_) {
-      emit(const NotesError('There is a connection error: Please try again!'));
+    } catch (e) {
+      print('[NotesCubit] Error fetching notes: $e');
+      String errorMessage = 'Failed to load notes. Please try again.';
+
+      if (e.toString().contains('Connection refused')) {
+        errorMessage =
+            'Unable to connect to the server. Please check your internet connection and try again.';
+      } else if (e.toString().contains('Authentication')) {
+        errorMessage = 'Authentication failed. Please sign in again.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage =
+            'Request timed out. Please check your internet connection and try again.';
+      } else if (e.toString().contains('Server error')) {
+        errorMessage = 'Server error. Please try again later.';
+      }
+
+      emit(NotesError(errorMessage));
     }
   }
 
@@ -145,6 +191,13 @@ class NotesCubit extends Cubit<NotesState> {
   // ---- CRUD (keep your existing ones; key shown methods below) ----
 
   Future<void> togglePin(Note note) async {
+    // Check connectivity before allowing pin operations
+    if (!await _isOnline()) {
+      throw OfflinePinException(
+        'Cannot pin notes while offline. Please check your internet connection and try again.',
+      );
+    }
+
     final cur = state;
 
     // Optimistic: update _all (filters operate on _all)
@@ -173,12 +226,17 @@ class NotesCubit extends Cubit<NotesState> {
 
     try {
       await repo.update(note.id, pinned: !note.pinned);
-    } catch (_) {
+    } catch (e) {
+      print('[NotesCubit] Error toggling pin: $e');
       // rollback
       if (idxAll != -1) {
         _all[idxAll] = _all[idxAll].copyWith(pinned: note.pinned);
       }
-      if (cur is NotesLoaded) emit(cur);
+      if (cur is NotesLoaded) {
+        emit(cur);
+        // Show error message to user
+        // Note: This will be handled by the UI layer
+      }
       return;
     }
 
@@ -198,8 +256,21 @@ class NotesCubit extends Cubit<NotesState> {
           pinnedOnly: _pinnedOnly,
         ),
       );
-    } catch (_) {
-      emit(const NotesError('Failed to create note.'));
+    } catch (e) {
+      print('[NotesCubit] Error creating note: $e');
+      String errorMessage = 'Failed to create note. Please try again.';
+
+      if (e.toString().contains('Connection refused')) {
+        errorMessage =
+            'Unable to connect to the server. Please check your internet connection and try again.';
+      } else if (e.toString().contains('Authentication')) {
+        errorMessage = 'Authentication failed. Please sign in again.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage =
+            'Request timed out. Please check your internet connection and try again.';
+      }
+
+      emit(NotesError(errorMessage));
       if (prev is NotesLoaded) emit(prev);
     }
   }
@@ -217,8 +288,21 @@ class NotesCubit extends Cubit<NotesState> {
           pinnedOnly: _pinnedOnly,
         ),
       );
-    } catch (_) {
-      emit(const NotesError('Failed to update note.'));
+    } catch (e) {
+      print('[NotesCubit] Error updating note: $e');
+      String errorMessage = 'Failed to update note. Please try again.';
+
+      if (e.toString().contains('Connection refused')) {
+        errorMessage =
+            'Unable to connect to the server. Please check your internet connection and try again.';
+      } else if (e.toString().contains('Authentication')) {
+        errorMessage = 'Authentication failed. Please sign in again.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage =
+            'Request timed out. Please check your internet connection and try again.';
+      }
+
+      emit(NotesError(errorMessage));
       if (prev is NotesLoaded) emit(prev);
     }
   }
@@ -269,5 +353,17 @@ class NotesCubit extends Cubit<NotesState> {
       } catch (_) {}
       _pendingDeletes.remove(id);
     }
+  }
+
+  void seedFromCache(List<Note> cached) {
+    _all = List<Note>.from(cached);
+    emit(
+      NotesLoaded(
+        _applyFilter(),
+        query: _query,
+        scope: _scope,
+        pinnedOnly: _pinnedOnly,
+      ),
+    );
   }
 }

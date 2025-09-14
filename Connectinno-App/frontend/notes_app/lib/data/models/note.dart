@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:equatable/equatable.dart';
 
 class Note extends Equatable {
@@ -17,14 +19,19 @@ class Note extends Equatable {
     required this.updatedAt,
   });
 
-  factory Note.fromJson(Map<String, dynamic> j) => Note(
-    id: j['id'] as String,
-    title: j['title'] as String,
-    content: (j['content'] as String?) ?? '',
-    pinned: (j['pinned'] as bool?) ?? false,
-    createdAt: DateTime.parse(j['created_at'] as String),
-    updatedAt: DateTime.parse(j['updated_at'] as String),
-  );
+  factory Note.temp({required String title, required String content}) {
+    final cid =
+        'client_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1 << 32)}';
+    final now = DateTime.now().toUtc();
+    return Note(
+      id: cid,
+      title: title,
+      content: content,
+      pinned: false,
+      createdAt: now,
+      updatedAt: now,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -35,23 +42,28 @@ class Note extends Equatable {
     'updated_at': updatedAt.toIso8601String(),
   };
 
+  static Note fromJson(Map<String, dynamic> m) => Note(
+    id: m['id'] as String,
+    title: (m['title'] ?? '') as String,
+    content: (m['content'] ?? '') as String,
+    pinned: (m['pinned'] ?? false) as bool,
+    createdAt: DateTime.parse(m['created_at'] as String).toUtc(),
+    updatedAt: DateTime.parse(m['updated_at'] as String).toUtc(),
+  );
+
   Note copyWith({
-    String? id,
     String? title,
     String? content,
     bool? pinned,
-    DateTime? createdAt,
     DateTime? updatedAt,
-  }) {
-    return Note(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      content: content ?? this.content,
-      pinned: pinned ?? this.pinned,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
+  }) => Note(
+    id: id,
+    title: title ?? this.title,
+    content: content ?? this.content,
+    pinned: pinned ?? this.pinned,
+    createdAt: createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
 
   @override
   List<Object?> get props => [id, title, content, pinned, createdAt, updatedAt];
